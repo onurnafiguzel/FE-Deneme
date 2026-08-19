@@ -1,0 +1,22 @@
+{
+  "name": "ts-temelleri",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "01": "tsx ts-temelleri/01-type-vs-interface/cozum.ts",
+    "02": "tsx ts-temelleri/02-union-literal/cozum.ts",
+    "03": "tsx ts-temelleri/03-generics/cozum.ts",
+    "04": "tsx ts-temelleri/04-strict-null/cozum.ts",
+    "05": "tsx ts-temelleri/05-utility-types/cozum.ts",
+    "06": "tsx ts-temelleri/06-type-inference/cozum.ts",
+    "07": "tsx ts-temelleri/07-type-narrowing/cozum.ts",
+    "08": "tsx ts-temelleri/08-tsconfig/cozum.ts",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2"
+  }
+}

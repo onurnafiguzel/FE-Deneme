@@ -1,0 +1,591 @@
+/**
+ * FlowLens'in `graph.json` çıktısına benzeyen örnek (mock) veri.
+ * Bu dosya bir öğrenme hedefi değil — hazır veri kaynağı olarak kullan.
+ *
+ * Backend karşılığı: bunu API'nin döndüğü DTO'ların "seed" hâli gibi düşün.
+ */
+
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+
+/** Bir düğümün mimarideki rolü. */
+export type NodeKind =
+  | 'controller'
+  | 'service'
+  | 'repository'
+  | 'publisher'
+  | 'consumer'
+  | 'external'
+
+/** İki düğüm arasındaki ilişkinin türü. */
+export type EdgeKind =
+  | 'call' // doğrudan metot çağrısı (Roslyn call graph)
+  | 'publish' // message bus'a event/command basma
+  | 'consume' // handler'ın mesajı tüketmesi
+  | 'http' // dış servise HTTP çağrısı
+  | 'db' // veritabanı erişimi
+
+export interface EndpointSummary {
+  /** Kararlı kimlik — route + method'dan üretilmiş gibi düşün. */
+  id: string
+  method: HttpMethod
+  path: string
+  /** Endpoint'in ait olduğu modül / bounded context. */
+  module: string
+  /** Handler metodun bulunduğu kaynak dosya. */
+  filePath: string
+  /** `Type.Method` formatında giriş noktası. */
+  handler: string
+}
+
+export interface GraphNode {
+  id: string
+  label: string
+  kind: NodeKind
+  module: string
+  filePath: string
+}
+
+export interface GraphEdge {
+  from: string
+  to: string
+  kind: EdgeKind
+  /** Kenarın kaynağındaki çağrı satırı (varsa). */
+  line?: number
+}
+
+export interface EndpointGraph {
+  endpointId: string
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+}
+
+/** FlowLens çıktısının tamamı. */
+export interface FlowLensGraph {
+  generatedAt: string
+  solution: string
+  endpoints: EndpointSummary[]
+  graphs: EndpointGraph[]
+}
+
+export const endpoints: EndpointSummary[] = [
+  {
+    id: 'orders-post-create',
+    method: 'POST',
+    path: '/api/orders',
+    module: 'Orders',
+    filePath: 'src/Modules/Orders/Api/OrdersController.cs',
+    handler: 'OrdersController.CreateOrder',
+  },
+  {
+    id: 'orders-get-by-id',
+    method: 'GET',
+    path: '/api/orders/{id}',
+    module: 'Orders',
+    filePath: 'src/Modules/Orders/Api/OrdersController.cs',
+    handler: 'OrdersController.GetOrderById',
+  },
+  {
+    id: 'orders-delete-cancel',
+    method: 'DELETE',
+    path: '/api/orders/{id}',
+    module: 'Orders',
+    filePath: 'src/Modules/Orders/Api/OrdersController.cs',
+    handler: 'OrdersController.CancelOrder',
+  },
+  {
+    id: 'payments-post-charge',
+    method: 'POST',
+    path: '/api/payments/charge',
+    module: 'Payments',
+    filePath: 'src/Modules/Payments/Api/PaymentsController.cs',
+    handler: 'PaymentsController.Charge',
+  },
+  {
+    id: 'payments-post-refund',
+    method: 'POST',
+    path: '/api/payments/{id}/refund',
+    module: 'Payments',
+    filePath: 'src/Modules/Payments/Api/PaymentsController.cs',
+    handler: 'PaymentsController.Refund',
+  },
+  {
+    id: 'catalog-get-products',
+    method: 'GET',
+    path: '/api/products',
+    module: 'Catalog',
+    filePath: 'src/Modules/Catalog/Api/ProductsController.cs',
+    handler: 'ProductsController.Search',
+  },
+  {
+    id: 'catalog-put-stock',
+    method: 'PUT',
+    path: '/api/products/{sku}/stock',
+    module: 'Catalog',
+    filePath: 'src/Modules/Catalog/Api/StockController.cs',
+    handler: 'StockController.UpdateStock',
+  },
+  {
+    id: 'identity-post-login',
+    method: 'POST',
+    path: '/api/auth/login',
+    module: 'Identity',
+    filePath: 'src/Modules/Identity/Api/AuthController.cs',
+    handler: 'AuthController.Login',
+  },
+  {
+    id: 'shipping-get-track',
+    method: 'GET',
+    path: '/api/shipments/{trackingNo}',
+    module: 'Shipping',
+    filePath: 'src/Modules/Shipping/Api/ShipmentsController.cs',
+    handler: 'ShipmentsController.Track',
+  },
+  {
+    id: 'notifications-patch-prefs',
+    method: 'PATCH',
+    path: '/api/notifications/preferences',
+    module: 'Notifications',
+    filePath: 'src/Modules/Notifications/Api/PreferencesController.cs',
+    handler: 'PreferencesController.Update',
+  },
+]
+
+export const graphs: EndpointGraph[] = [
+  {
+    endpointId: 'orders-post-create',
+    nodes: [
+      {
+        id: 'OrdersController.CreateOrder',
+        label: 'OrdersController.CreateOrder',
+        kind: 'controller',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Api/OrdersController.cs',
+      },
+      {
+        id: 'CreateOrderCommandHandler.Handle',
+        label: 'CreateOrderCommandHandler.Handle',
+        kind: 'service',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Application/CreateOrderCommandHandler.cs',
+      },
+      {
+        id: 'OrderRepository.Add',
+        label: 'OrderRepository.Add',
+        kind: 'repository',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Infrastructure/OrderRepository.cs',
+      },
+      {
+        id: 'EventBus.Publish<OrderPlaced>',
+        label: 'publish OrderPlaced',
+        kind: 'publisher',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Application/CreateOrderCommandHandler.cs',
+      },
+      {
+        id: 'OrderPlacedHandler.Handle',
+        label: 'OrderPlacedHandler.Handle',
+        kind: 'consumer',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Application/OrderPlacedHandler.cs',
+      },
+      {
+        id: 'ReserveStockHandler.Handle',
+        label: 'ReserveStockHandler.Handle',
+        kind: 'consumer',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Application/ReserveStockHandler.cs',
+      },
+    ],
+    edges: [
+      { from: 'OrdersController.CreateOrder', to: 'CreateOrderCommandHandler.Handle', kind: 'call', line: 42 },
+      { from: 'CreateOrderCommandHandler.Handle', to: 'OrderRepository.Add', kind: 'call', line: 31 },
+      { from: 'OrderRepository.Add', to: 'OrderRepository.Add', kind: 'db' },
+      { from: 'CreateOrderCommandHandler.Handle', to: 'EventBus.Publish<OrderPlaced>', kind: 'publish', line: 38 },
+      { from: 'EventBus.Publish<OrderPlaced>', to: 'OrderPlacedHandler.Handle', kind: 'consume' },
+      { from: 'EventBus.Publish<OrderPlaced>', to: 'ReserveStockHandler.Handle', kind: 'consume' },
+    ],
+  },
+  {
+    endpointId: 'orders-get-by-id',
+    nodes: [
+      {
+        id: 'OrdersController.GetOrderById',
+        label: 'OrdersController.GetOrderById',
+        kind: 'controller',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Api/OrdersController.cs',
+      },
+      {
+        id: 'GetOrderQueryHandler.Handle',
+        label: 'GetOrderQueryHandler.Handle',
+        kind: 'service',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Application/GetOrderQueryHandler.cs',
+      },
+      {
+        id: 'OrderReadStore.FindById',
+        label: 'OrderReadStore.FindById',
+        kind: 'repository',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Infrastructure/OrderReadStore.cs',
+      },
+    ],
+    edges: [
+      { from: 'OrdersController.GetOrderById', to: 'GetOrderQueryHandler.Handle', kind: 'call', line: 27 },
+      { from: 'GetOrderQueryHandler.Handle', to: 'OrderReadStore.FindById', kind: 'call', line: 19 },
+      { from: 'OrderReadStore.FindById', to: 'OrderReadStore.FindById', kind: 'db' },
+    ],
+  },
+  {
+    endpointId: 'orders-delete-cancel',
+    nodes: [
+      {
+        id: 'OrdersController.CancelOrder',
+        label: 'OrdersController.CancelOrder',
+        kind: 'controller',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Api/OrdersController.cs',
+      },
+      {
+        id: 'CancelOrderCommandHandler.Handle',
+        label: 'CancelOrderCommandHandler.Handle',
+        kind: 'service',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Application/CancelOrderCommandHandler.cs',
+      },
+      {
+        id: 'EventBus.Publish<OrderCancelled>',
+        label: 'publish OrderCancelled',
+        kind: 'publisher',
+        module: 'Orders',
+        filePath: 'src/Modules/Orders/Application/CancelOrderCommandHandler.cs',
+      },
+      {
+        id: 'RefundOnCancelHandler.Handle',
+        label: 'RefundOnCancelHandler.Handle',
+        kind: 'consumer',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Application/RefundOnCancelHandler.cs',
+      },
+      {
+        id: 'ReleaseStockHandler.Handle',
+        label: 'ReleaseStockHandler.Handle',
+        kind: 'consumer',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Application/ReleaseStockHandler.cs',
+      },
+    ],
+    edges: [
+      { from: 'OrdersController.CancelOrder', to: 'CancelOrderCommandHandler.Handle', kind: 'call', line: 66 },
+      { from: 'CancelOrderCommandHandler.Handle', to: 'EventBus.Publish<OrderCancelled>', kind: 'publish', line: 24 },
+      { from: 'EventBus.Publish<OrderCancelled>', to: 'RefundOnCancelHandler.Handle', kind: 'consume' },
+      { from: 'EventBus.Publish<OrderCancelled>', to: 'ReleaseStockHandler.Handle', kind: 'consume' },
+    ],
+  },
+  {
+    endpointId: 'payments-post-charge',
+    nodes: [
+      {
+        id: 'PaymentsController.Charge',
+        label: 'PaymentsController.Charge',
+        kind: 'controller',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Api/PaymentsController.cs',
+      },
+      {
+        id: 'ChargeCommandHandler.Handle',
+        label: 'ChargeCommandHandler.Handle',
+        kind: 'service',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Application/ChargeCommandHandler.cs',
+      },
+      {
+        id: 'StripeGateway.CreateCharge',
+        label: 'StripeGateway.CreateCharge',
+        kind: 'external',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Infrastructure/StripeGateway.cs',
+      },
+      {
+        id: 'PaymentRepository.Save',
+        label: 'PaymentRepository.Save',
+        kind: 'repository',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Infrastructure/PaymentRepository.cs',
+      },
+      {
+        id: 'EventBus.Publish<PaymentCaptured>',
+        label: 'publish PaymentCaptured',
+        kind: 'publisher',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Application/ChargeCommandHandler.cs',
+      },
+      {
+        id: 'PaymentCapturedHandler.Handle',
+        label: 'PaymentCapturedHandler.Handle',
+        kind: 'consumer',
+        module: 'Shipping',
+        filePath: 'src/Modules/Shipping/Application/PaymentCapturedHandler.cs',
+      },
+    ],
+    edges: [
+      { from: 'PaymentsController.Charge', to: 'ChargeCommandHandler.Handle', kind: 'call', line: 35 },
+      { from: 'ChargeCommandHandler.Handle', to: 'StripeGateway.CreateCharge', kind: 'call', line: 28 },
+      { from: 'StripeGateway.CreateCharge', to: 'StripeGateway.CreateCharge', kind: 'http' },
+      { from: 'ChargeCommandHandler.Handle', to: 'PaymentRepository.Save', kind: 'call', line: 44 },
+      { from: 'ChargeCommandHandler.Handle', to: 'EventBus.Publish<PaymentCaptured>', kind: 'publish', line: 51 },
+      { from: 'EventBus.Publish<PaymentCaptured>', to: 'PaymentCapturedHandler.Handle', kind: 'consume' },
+    ],
+  },
+  {
+    endpointId: 'payments-post-refund',
+    nodes: [
+      {
+        id: 'PaymentsController.Refund',
+        label: 'PaymentsController.Refund',
+        kind: 'controller',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Api/PaymentsController.cs',
+      },
+      {
+        id: 'RefundCommandHandler.Handle',
+        label: 'RefundCommandHandler.Handle',
+        kind: 'service',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Application/RefundCommandHandler.cs',
+      },
+      {
+        id: 'StripeGateway.CreateRefund',
+        label: 'StripeGateway.CreateRefund',
+        kind: 'external',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Infrastructure/StripeGateway.cs',
+      },
+      {
+        id: 'EventBus.Publish<PaymentRefunded>',
+        label: 'publish PaymentRefunded',
+        kind: 'publisher',
+        module: 'Payments',
+        filePath: 'src/Modules/Payments/Application/RefundCommandHandler.cs',
+      },
+      {
+        id: 'RefundNotificationHandler.Handle',
+        label: 'RefundNotificationHandler.Handle',
+        kind: 'consumer',
+        module: 'Notifications',
+        filePath: 'src/Modules/Notifications/Application/RefundNotificationHandler.cs',
+      },
+    ],
+    edges: [
+      { from: 'PaymentsController.Refund', to: 'RefundCommandHandler.Handle', kind: 'call', line: 72 },
+      { from: 'RefundCommandHandler.Handle', to: 'StripeGateway.CreateRefund', kind: 'call', line: 33 },
+      { from: 'StripeGateway.CreateRefund', to: 'StripeGateway.CreateRefund', kind: 'http' },
+      { from: 'RefundCommandHandler.Handle', to: 'EventBus.Publish<PaymentRefunded>', kind: 'publish', line: 40 },
+      { from: 'EventBus.Publish<PaymentRefunded>', to: 'RefundNotificationHandler.Handle', kind: 'consume' },
+    ],
+  },
+  {
+    endpointId: 'catalog-get-products',
+    nodes: [
+      {
+        id: 'ProductsController.Search',
+        label: 'ProductsController.Search',
+        kind: 'controller',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Api/ProductsController.cs',
+      },
+      {
+        id: 'ProductSearchService.Search',
+        label: 'ProductSearchService.Search',
+        kind: 'service',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Application/ProductSearchService.cs',
+      },
+      {
+        id: 'ElasticProductIndex.Query',
+        label: 'ElasticProductIndex.Query',
+        kind: 'external',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Infrastructure/ElasticProductIndex.cs',
+      },
+      {
+        id: 'ProductRepository.GetByIds',
+        label: 'ProductRepository.GetByIds',
+        kind: 'repository',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Infrastructure/ProductRepository.cs',
+      },
+    ],
+    edges: [
+      { from: 'ProductsController.Search', to: 'ProductSearchService.Search', kind: 'call', line: 21 },
+      { from: 'ProductSearchService.Search', to: 'ElasticProductIndex.Query', kind: 'call', line: 40 },
+      { from: 'ElasticProductIndex.Query', to: 'ElasticProductIndex.Query', kind: 'http' },
+      { from: 'ProductSearchService.Search', to: 'ProductRepository.GetByIds', kind: 'call', line: 47 },
+      { from: 'ProductRepository.GetByIds', to: 'ProductRepository.GetByIds', kind: 'db' },
+    ],
+  },
+  {
+    endpointId: 'catalog-put-stock',
+    nodes: [
+      {
+        id: 'StockController.UpdateStock',
+        label: 'StockController.UpdateStock',
+        kind: 'controller',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Api/StockController.cs',
+      },
+      {
+        id: 'UpdateStockCommandHandler.Handle',
+        label: 'UpdateStockCommandHandler.Handle',
+        kind: 'service',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Application/UpdateStockCommandHandler.cs',
+      },
+      {
+        id: 'StockRepository.Update',
+        label: 'StockRepository.Update',
+        kind: 'repository',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Infrastructure/StockRepository.cs',
+      },
+      {
+        id: 'EventBus.Publish<StockChanged>',
+        label: 'publish StockChanged',
+        kind: 'publisher',
+        module: 'Catalog',
+        filePath: 'src/Modules/Catalog/Application/UpdateStockCommandHandler.cs',
+      },
+      {
+        id: 'BackInStockHandler.Handle',
+        label: 'BackInStockHandler.Handle',
+        kind: 'consumer',
+        module: 'Notifications',
+        filePath: 'src/Modules/Notifications/Application/BackInStockHandler.cs',
+      },
+    ],
+    edges: [
+      { from: 'StockController.UpdateStock', to: 'UpdateStockCommandHandler.Handle', kind: 'call', line: 30 },
+      { from: 'UpdateStockCommandHandler.Handle', to: 'StockRepository.Update', kind: 'call', line: 22 },
+      { from: 'StockRepository.Update', to: 'StockRepository.Update', kind: 'db' },
+      { from: 'UpdateStockCommandHandler.Handle', to: 'EventBus.Publish<StockChanged>', kind: 'publish', line: 29 },
+      { from: 'EventBus.Publish<StockChanged>', to: 'BackInStockHandler.Handle', kind: 'consume' },
+    ],
+  },
+  {
+    endpointId: 'identity-post-login',
+    nodes: [
+      {
+        id: 'AuthController.Login',
+        label: 'AuthController.Login',
+        kind: 'controller',
+        module: 'Identity',
+        filePath: 'src/Modules/Identity/Api/AuthController.cs',
+      },
+      {
+        id: 'SignInService.Authenticate',
+        label: 'SignInService.Authenticate',
+        kind: 'service',
+        module: 'Identity',
+        filePath: 'src/Modules/Identity/Application/SignInService.cs',
+      },
+      {
+        id: 'UserRepository.FindByEmail',
+        label: 'UserRepository.FindByEmail',
+        kind: 'repository',
+        module: 'Identity',
+        filePath: 'src/Modules/Identity/Infrastructure/UserRepository.cs',
+      },
+      {
+        id: 'JwtTokenFactory.Create',
+        label: 'JwtTokenFactory.Create',
+        kind: 'service',
+        module: 'Identity',
+        filePath: 'src/Modules/Identity/Infrastructure/JwtTokenFactory.cs',
+      },
+    ],
+    edges: [
+      { from: 'AuthController.Login', to: 'SignInService.Authenticate', kind: 'call', line: 18 },
+      { from: 'SignInService.Authenticate', to: 'UserRepository.FindByEmail', kind: 'call', line: 26 },
+      { from: 'UserRepository.FindByEmail', to: 'UserRepository.FindByEmail', kind: 'db' },
+      { from: 'SignInService.Authenticate', to: 'JwtTokenFactory.Create', kind: 'call', line: 34 },
+    ],
+  },
+  {
+    endpointId: 'shipping-get-track',
+    nodes: [
+      {
+        id: 'ShipmentsController.Track',
+        label: 'ShipmentsController.Track',
+        kind: 'controller',
+        module: 'Shipping',
+        filePath: 'src/Modules/Shipping/Api/ShipmentsController.cs',
+      },
+      {
+        id: 'TrackingService.GetStatus',
+        label: 'TrackingService.GetStatus',
+        kind: 'service',
+        module: 'Shipping',
+        filePath: 'src/Modules/Shipping/Application/TrackingService.cs',
+      },
+      {
+        id: 'CarrierApiClient.GetTracking',
+        label: 'CarrierApiClient.GetTracking',
+        kind: 'external',
+        module: 'Shipping',
+        filePath: 'src/Modules/Shipping/Infrastructure/CarrierApiClient.cs',
+      },
+    ],
+    edges: [
+      { from: 'ShipmentsController.Track', to: 'TrackingService.GetStatus', kind: 'call', line: 24 },
+      { from: 'TrackingService.GetStatus', to: 'CarrierApiClient.GetTracking', kind: 'call', line: 17 },
+      { from: 'CarrierApiClient.GetTracking', to: 'CarrierApiClient.GetTracking', kind: 'http' },
+    ],
+  },
+  {
+    endpointId: 'notifications-patch-prefs',
+    nodes: [
+      {
+        id: 'PreferencesController.Update',
+        label: 'PreferencesController.Update',
+        kind: 'controller',
+        module: 'Notifications',
+        filePath: 'src/Modules/Notifications/Api/PreferencesController.cs',
+      },
+      {
+        id: 'PreferenceService.Update',
+        label: 'PreferenceService.Update',
+        kind: 'service',
+        module: 'Notifications',
+        filePath: 'src/Modules/Notifications/Application/PreferenceService.cs',
+      },
+      {
+        id: 'PreferenceRepository.Save',
+        label: 'PreferenceRepository.Save',
+        kind: 'repository',
+        module: 'Notifications',
+        filePath: 'src/Modules/Notifications/Infrastructure/PreferenceRepository.cs',
+      },
+    ],
+    edges: [
+      { from: 'PreferencesController.Update', to: 'PreferenceService.Update', kind: 'call', line: 29 },
+      { from: 'PreferenceService.Update', to: 'PreferenceRepository.Save', kind: 'call', line: 15 },
+      { from: 'PreferenceRepository.Save', to: 'PreferenceRepository.Save', kind: 'db' },
+    ],
+  },
+]
+
+export const mockGraph: FlowLensGraph = {
+  generatedAt: '2026-08-19T09:12:00Z',
+  solution: 'FlowLens.Sample.sln',
+  endpoints,
+  graphs,
+}
+
+/** Bir endpoint'in graph'ını id ile bul. */
+export function findGraph(endpointId: string): EndpointGraph | undefined {
+  return graphs.find((g) => g.endpointId === endpointId)
+}
+
+/** Veride geçen benzersiz modül isimleri (filtre dropdown'ı için). */
+export const modules: string[] = [...new Set(endpoints.map((e) => e.module))]
