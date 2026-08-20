@@ -4,11 +4,15 @@ import { useState } from "react";
 
 export default function App() {
   const [query, setQuery] = useState("");
+  const [method, setMethod] = useState("");
+
   const filteredEndpoints = query
     ? endpoints.filter((x) =>
         x.path.toLowerCase().includes(query.toLowerCase()),
       )
-    : endpoints;
+    : method
+      ? endpoints.filter((x) => x.method === method)
+      : endpoints;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-8">
@@ -21,6 +25,18 @@ export default function App() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="path ara..."
         />
+        <select
+          className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-slate-500"
+          value={method}
+          onChange={(e) => setMethod(e.target.value)}
+        >
+          <option value="">Tümü</option>
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PATCH">PATCH</option>
+          <option value="DELETE">DELETE</option>
+          <option value="PUT">PUT</option>
+        </select>
         <button
           className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500"
           onClick={() => setQuery("")}
@@ -28,8 +44,9 @@ export default function App() {
           Temizle
         </button>
       </div>
-      <p className="mb-6 text-sm text-slate-400" />
-      {filteredEndpoints.length} Endpoint
+      <p className="mb-6 text-sm text-slate-400">
+        {filteredEndpoints.length} Endpoint{" "}
+      </p>
       <EndpointList endpoints={filteredEndpoints} />
     </div>
   );
