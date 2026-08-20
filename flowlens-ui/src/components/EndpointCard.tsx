@@ -1,13 +1,15 @@
 import type { HttpMethod } from "../data/mockGraph"
+import { ModuleBadge } from "./ModuleBadge"
 
 interface EndpointCardProps {
     method: HttpMethod
     path: string
     module: string
     filePath: string
+    handler: string
 }
 
-export function EndpointCard({ method, path, module, filePath }: EndpointCardProps) {
+export function EndpointCard({ method, path, module, filePath, handler }: EndpointCardProps) {
 
     let methodColour;
 
@@ -29,8 +31,11 @@ export function EndpointCard({ method, path, module, filePath }: EndpointCardPro
                     {path}
                 </span>
             </div>
-            <p className="mt-2 text-xs text-slate-400">{module}</p>
+            <div className="mt-2">
+                <ModuleBadge module={module} />
+            </div>
             <p className="mt-1 font-mono text-[11px] text-slate-500">{filePath}</p>
+            <p className="mt-1 font-mono text-[11px] text-slate-400">{handler}</p>
         </div>
     )
 }
