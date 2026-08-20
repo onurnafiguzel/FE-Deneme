@@ -1,14 +1,16 @@
-// FlowLens UI — uygulamanın kök component'i.
-// Bu dosyayı sen yazacaksın. Şimdilik sadece iskelet.
-
-// TODO (01): EndpointCard'ı import et
-// TODO (01): mockGraph'tan endpoints'i import et
+import { endpoints } from "./data/mockGraph"
+import { EndpointCard } from "./components/EndpointCard"
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-8 space-y-3">
       <h1 className="text-2xl font-bold mb-6">FlowLens</h1>
-      {/* TODO (01): buraya birkaç EndpointCard yerleştir */}
+
+      <EndpointCard method={endpoints[0].method} filePath={endpoints[0].filePath} module={endpoints[0].module} path={endpoints[0].path} />
+
+      <EndpointCard method={endpoints[1].method} filePath={endpoints[1].filePath} module={endpoints[1].module} path={endpoints[1].path} />
+      
+      <EndpointCard method={endpoints[3].method} filePath={endpoints[3].filePath} module={endpoints[3].module} path={endpoints[3].path} />
     </div>
   )
 }
