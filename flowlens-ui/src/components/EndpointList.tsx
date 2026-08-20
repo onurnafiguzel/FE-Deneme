@@ -1,8 +1,16 @@
-// 02 — Liste render: map + key
-// Görev: ogrenme/02-liste-render/gorev.md
-//
-// TODO: EndpointSummary tipini ve EndpointCard'ı import et
-// TODO: EndpointListProps tipini tanımla
-// TODO: component'i yaz ve export et
+import type { EndpointSummary } from "../data/mockGraph"
+import { EndpointCard } from "./EndpointCard"
 
-export {}
+interface EndpointListProps {
+    endpoints: EndpointSummary[]
+}
+
+export function EndpointList({ endpoints }: EndpointListProps) {
+    return (
+        <div className="space-y-3">
+            {endpoints.map((e) => (
+                <EndpointCard key={e.id} {...e} />
+            ))}
+        </div>
+    )
+}
