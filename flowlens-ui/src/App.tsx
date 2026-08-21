@@ -1,4 +1,4 @@
-import { endpoints, modules } from "./data/mockGraph";
+import { endpoints, modules, type EndpointSummary } from "./data/mockGraph";
 import { EndpointList } from "./components/EndpointList";
 import { useState, type ChangeEvent } from "react";
 
@@ -6,7 +6,8 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [method, setMethod] = useState("");
   const [module, setModule] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<EndpointSummary[]>([]);
 
   function handleQueryChange(e: ChangeEvent<HTMLInputElement>) {
     setQuery(e.target.value);
@@ -26,7 +27,7 @@ export default function App() {
     setModule("");
   }
 
-  const filteredEndpoints = endpoints.filter(
+  const filteredEndpoints = data.filter(
     (x) =>
       (!query || x.path.toLowerCase().includes(query.toLowerCase())) &&
       (!method || x.method === method) &&
