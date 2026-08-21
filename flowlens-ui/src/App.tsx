@@ -74,7 +74,9 @@ export default function App() {
         </button>
       </div>
       <p className="mb-6 text-sm text-slate-400">
-        {filteredEndpoints.length} Endpoint
+        {filteredEndpoints.length > 0 && (
+          <span>{filteredEndpoints.length} Endpoint</span>
+        )}
       </p>
       <EndpointList endpoints={filteredEndpoints} />
     </div>
