@@ -1,4 +1,4 @@
-import { endpoints, modules, type EndpointSummary } from "./data/mockGraph";
+import { modules, type EndpointSummary } from "./data/mockGraph";
 import { EndpointList } from "./components/EndpointList";
 import { useState, type ChangeEvent, useEffect } from "react";
 
@@ -12,14 +12,15 @@ export default function App() {
   useEffect(() => {
     console.log("Effect çalıştı");
 
-    const timeoutId = setTimeout(() => {
-      setData(endpoints);
-      setIsLoading(false);
-    }, 800);
+    fetch("/graph.json")
+      .then((r) => r.json())
+      .then((d) => {
+        setData(d.endpoints);
+        setIsLoading(false);
+      });
 
     return () => {
       console.log("cleanup çalıştı");
-      clearTimeout(timeoutId);
     };
   }, []);
 
