@@ -1,71 +1,26 @@
 /**
  * FlowLens'in `graph.json` çıktısına benzeyen örnek (mock) veri.
- * Bu dosya bir öğrenme hedefi değil — hazır veri kaynağı olarak kullan.
+ * Tipler `src/api/types.ts` içinde tanımlı — burada sadece veri var.
  *
- * Backend karşılığı: bunu API'nin döndüğü DTO'ların "seed" hâli gibi düşün.
+ * Bu dosya bir öğrenme hedefi değil.
  */
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+import type {
+  EndpointSummary,
+  EndpointGraph,
+  FlowLensGraph,
+} from "../api/types"
 
-/** Bir düğümün mimarideki rolü. */
-export type NodeKind =
-  | 'controller'
-  | 'service'
-  | 'repository'
-  | 'publisher'
-  | 'consumer'
-  | 'external'
-
-/** İki düğüm arasındaki ilişkinin türü. */
-export type EdgeKind =
-  | 'call' // doğrudan metot çağrısı (Roslyn call graph)
-  | 'publish' // message bus'a event/command basma
-  | 'consume' // handler'ın mesajı tüketmesi
-  | 'http' // dış servise HTTP çağrısı
-  | 'db' // veritabanı erişimi
-
-export interface EndpointSummary {
-  /** Kararlı kimlik — route + method'dan üretilmiş gibi düşün. */
-  id: string
-  method: HttpMethod
-  path: string
-  /** Endpoint'in ait olduğu modül / bounded context. */
-  module: string
-  /** Handler metodun bulunduğu kaynak dosya. */
-  filePath: string
-  /** `Type.Method` formatında giriş noktası. */
-  handler: string
-}
-
-export interface GraphNode {
-  id: string
-  label: string
-  kind: NodeKind
-  module: string
-  filePath: string
-}
-
-export interface GraphEdge {
-  from: string
-  to: string
-  kind: EdgeKind
-  /** Kenarın kaynağındaki çağrı satırı (varsa). */
-  line?: number
-}
-
-export interface EndpointGraph {
-  endpointId: string
-  nodes: GraphNode[]
-  edges: GraphEdge[]
-}
-
-/** FlowLens çıktısının tamamı. */
-export interface FlowLensGraph {
-  generatedAt: string
-  solution: string
-  endpoints: EndpointSummary[]
-  graphs: EndpointGraph[]
-}
+export type {
+  HttpMethod,
+  NodeKind,
+  EdgeKind,
+  EndpointSummary,
+  GraphNode,
+  GraphEdge,
+  EndpointGraph,
+  FlowLensGraph,
+} from "../api/types"
 
 export const endpoints: EndpointSummary[] = [
   {

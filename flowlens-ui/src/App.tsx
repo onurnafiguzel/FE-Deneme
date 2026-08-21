@@ -1,6 +1,8 @@
-import { modules, type EndpointSummary } from "./data/mockGraph";
+import { modules} from "./data/mockGraph";
 import { EndpointList } from "./components/EndpointList";
 import { useState, type ChangeEvent, useEffect } from "react";
+import { fetchEndpoints } from "./api/flowLensApi";
+import type { EndpointSummary } from "./api/types";
 
 export default function App() {
   const [query, setQuery] = useState("");
@@ -12,14 +14,12 @@ export default function App() {
   useEffect(() => {
     let iptal = false;
 
-    fetch("/graph.json")
-      .then((r) => r.json())
-      .then((d) => {
-        if (!iptal) {
-          setData(d.endpoints);
-          setIsLoading(false);
-        }
-      });
+    fetchEndpoints().then((list) => {
+      if (!iptal) {
+        setData(list);
+        setIsLoading(false);
+      }
+    });
 
     return () => {
       iptal = true;
