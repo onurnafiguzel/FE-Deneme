@@ -10,17 +10,19 @@ export default function App() {
   const [data, setData] = useState<EndpointSummary[]>([]);
 
   useEffect(() => {
-    console.log("Effect çalıştı");
+    let iptal = false;
 
     fetch("/graph.json")
       .then((r) => r.json())
       .then((d) => {
-        setData(d.endpoints);
-        setIsLoading(false);
+        if (!iptal) {
+          setData(d.endpoints);
+          setIsLoading(false);
+        }
       });
 
     return () => {
-      console.log("cleanup çalıştı");
+      iptal = true;
     };
   }, []);
 
@@ -90,7 +92,8 @@ export default function App() {
           Temizle
         </button>
         <button
-          className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 disabled:opacity-50" disabled={isLoading}
+          className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 disabled:opacity-50"
+          disabled={isLoading}
           onClick={() => {
             setIsLoading(true);
             setTimeout(() => setIsLoading(false), 800);
