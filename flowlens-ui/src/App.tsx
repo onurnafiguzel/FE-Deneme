@@ -1,6 +1,6 @@
 import { endpoints, modules, type EndpointSummary } from "./data/mockGraph";
 import { EndpointList } from "./components/EndpointList";
-import { useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent, useEffect } from "react";
 
 export default function App() {
   const [query, setQuery] = useState("");
@@ -8,6 +8,20 @@ export default function App() {
   const [module, setModule] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<EndpointSummary[]>([]);
+
+  useEffect(() => {
+    console.log("Effect çalıştı");
+
+    const timeoutId = setTimeout(() => {
+      setData(endpoints);
+      setIsLoading(false);
+    }, 800);
+
+    return () => {
+      console.log("cleanup çalıştı");
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   function handleQueryChange(e: ChangeEvent<HTMLInputElement>) {
     setQuery(e.target.value);
