@@ -6,6 +6,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [method, setMethod] = useState("");
   const [module, setModule] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleQueryChange(e: ChangeEvent<HTMLInputElement>) {
     setQuery(e.target.value);
@@ -72,13 +73,30 @@ export default function App() {
         >
           Temizle
         </button>
+        <button
+          className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500"
+          onClick={() => {
+            setIsLoading(true);
+            setTimeout(() => setIsLoading(false), 800);
+          }}
+        >
+          Yenile
+        </button>
       </div>
-      <p className="mb-6 text-sm text-slate-400">
-        {filteredEndpoints.length > 0 && (
-          <span>{filteredEndpoints.length} Endpoint</span>
-        )}
-      </p>
-      <EndpointList endpoints={filteredEndpoints} />
+      {isLoading ? (
+        <p className="rounded border border-slate-800 p-8 text-center text-sm text-slate-500">
+          Yükleniyor...
+        </p>
+      ) : (
+        <>
+          <p className="mb-6 text-sm text-slate-400">
+            {filteredEndpoints.length > 0 && (
+              <span>{filteredEndpoints.length} Endpoint</span>
+            )}
+          </p>
+          <EndpointList endpoints={filteredEndpoints} />
+        </>
+      )}
     </div>
   );
 }
