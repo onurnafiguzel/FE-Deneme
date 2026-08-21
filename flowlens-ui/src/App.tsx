@@ -74,7 +74,7 @@ export default function App() {
           Temizle
         </button>
         <button
-          className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500"
+          className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 disabled:opacity-50" disabled={isLoading}
           onClick={() => {
             setIsLoading(true);
             setTimeout(() => setIsLoading(false), 800);
