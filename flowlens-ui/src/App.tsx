@@ -1,4 +1,4 @@
-import { modules} from "./data/mockGraph";
+import { modules } from "./data/mockGraph";
 import { EndpointList } from "./components/EndpointList";
 import { useState, type ChangeEvent, useEffect } from "react";
 import { fetchEndpoints } from "./api/flowLensApi";
@@ -10,21 +10,35 @@ export default function App() {
   const [module, setModule] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<EndpointSummary[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let iptal = false;
+    setIsLoading(true);
+    setError(null);
 
-    fetchEndpoints().then((list) => {
-      if (!iptal) {
-        setData(list);
-        setIsLoading(false);
-      }
-    });
+    fetchEndpoints()
+      .then((list) => {
+        if (!iptal) {
+          setData(list);
+        }
+      })
+      .catch((err) => {
+        if (!iptal) {
+          setError(err instanceof Error ? err.message : "Bilinmeyen hata");
+        }
+      })
+      .finally(() => {
+        if (!iptal) {
+          setIsLoading(false);
+        }
+      });
 
     return () => {
       iptal = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   function handleQueryChange(e: ChangeEvent<HTMLInputElement>) {
     setQuery(e.target.value);
@@ -50,6 +64,32 @@ export default function App() {
       (!method || x.method === method) &&
       (!module || x.module === module),
   );
+
+  let icerik;
+  if (isLoading) {
+    icerik = (
+      <p className="rounded border border-slate-800 p-8 text-center text-sm text-slate-500">
+        Yükleniyor...
+      </p>
+    );
+  } else if (error) {
+    icerik = (
+      <p className="rounded border border-red-900 bg-red-950/40 p-8 text-center text-sm text-red-300">
+        {error}
+      </p>
+    );
+  } else {
+    icerik = (
+      <>
+        <p className="mb-6 text-sm text-slate-400">
+          {filteredEndpoints.length > 0 && (
+            <span>{filteredEndpoints.length} Endpoint</span>
+          )}
+        </p>
+        <EndpointList endpoints={filteredEndpoints} />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-8">
@@ -95,27 +135,13 @@ export default function App() {
           className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 disabled:opacity-50"
           disabled={isLoading}
           onClick={() => {
-            setIsLoading(true);
-            setTimeout(() => setIsLoading(false), 800);
+            setReloadKey((k) => k + 1);
           }}
         >
           Yenile
         </button>
       </div>
-      {isLoading ? (
-        <p className="rounded border border-slate-800 p-8 text-center text-sm text-slate-500">
-          Yükleniyor...
-        </p>
-      ) : (
-        <>
-          <p className="mb-6 text-sm text-slate-400">
-            {filteredEndpoints.length > 0 && (
-              <span>{filteredEndpoints.length} Endpoint</span>
-            )}
-          </p>
-          <EndpointList endpoints={filteredEndpoints} />
-        </>
-      )}
+      {icerik}
     </div>
   );
 }
