@@ -58,6 +58,10 @@ export default function App() {
     setModule("");
   }
 
+  function handleReload() {
+    setReloadKey((k) => k + 1);
+  }
+
   const filteredEndpoints = data.filter(
     (x) =>
       (!query || x.path.toLowerCase().includes(query.toLowerCase())) &&
@@ -74,9 +78,15 @@ export default function App() {
     );
   } else if (error) {
     icerik = (
-      <p className="rounded border border-red-900 bg-red-950/40 p-8 text-center text-sm text-red-300">
-        {error}
-      </p>
+      <div className="rounded border border-red-900 bg-red-950/40 p-8 text-center text-sm text-red-300">
+        <p>{error}</p>
+        <button
+          className="mt-4 rounded border border-red-800 px-3 py-2 text-xs hover:border-red-600"
+          onClick={handleReload}
+        >
+          Tekrar Dene
+        </button>
+      </div>
     );
   } else {
     icerik = (
@@ -134,9 +144,7 @@ export default function App() {
         <button
           className="rounded border border-slate-700 px-3 py-2 text-sm hover:border-slate-500 disabled:opacity-50"
           disabled={isLoading}
-          onClick={() => {
-            setReloadKey((k) => k + 1);
-          }}
+          onClick={handleReload}
         >
           Yenile
         </button>
