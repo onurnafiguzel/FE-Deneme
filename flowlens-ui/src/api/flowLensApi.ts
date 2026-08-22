@@ -1,4 +1,4 @@
-import type { EndpointSummary, FlowLensGraph } from "./types";
+import type { EndpointGraph, EndpointSummary, FlowLensGraph } from "./types";
 
 const BASE_URL = "/graph.json";
 
@@ -13,4 +13,24 @@ export async function fetchGraph(): Promise<FlowLensGraph> {
 export async function fetchEndpoints(): Promise<EndpointSummary[]> {
   const graph = await fetchGraph();
   return graph.endpoints;
+}
+
+export interface EndpointDetail {
+  summary: EndpointSummary;
+  graph: EndpointGraph;
+}
+
+export async function fetchEndpointDetail(
+  id: string,
+): Promise<EndpointDetail | null> {
+  const result = await fetchGraph();
+
+  const summary = result.endpoints.find((x) => x.id === id);
+  const graph = result.graphs.find((g) => g.endpointId === id);
+
+  if (!summary || !graph) {
+    return null;
+  }
+
+  return { summary, graph };
 }
